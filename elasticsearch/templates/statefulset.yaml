@@ -22,7 +22,7 @@ spec:
   podManagementPolicy: {{ .Values.podManagementPolicy }}
   updateStrategy:
     type: {{ .Values.updateStrategy }}
-  {{- if .Values.persistence.enabled }}
+  {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
   volumeClaimTemplates:
   - metadata:
       name: {{ template "elasticsearch.uname" . }}
@@ -142,6 +142,11 @@ spec:
           secret: {{ toYaml . | nindent 12 }}
         {{- end }}
 {{ end }}
+      {{- if and .Values.persistence.enabled .Values.persistence.existingClaim }}
+      - name: {{ template "elasticsearch.uname" . }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | quote }}
+      {{- end }}
       {{- if .Values.extraVolumes }}
       # Currently some extra blocks accept strings
       # to continue with backwards compatibility this is being kept
